@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link
+href="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.css"
+rel="stylesheet"
+>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.30.0/mapbox-gl.js"></script>
+
+<style>
+html,
+body {
+margin: 0;
+padding: 0;
+width: 100%;
+height: 100%;
+}
+
+#map {
+width: 100%;
+height: 100%;
+}
+
+.mapboxgl-popup {
+max-width: 300px;
+}
+
+.project-popup {
+width: 270px;
+font-family: Arial, sans-serif;
+color: #222;
+}
+
+.project-popup img {
+width: 100%;
+height: 160px;
+object-fit: cover;
+display: block;
+}
+
+.project-body {
+padding: 14px;
+}
+
+.project-body h3 {
+margin: 0 0 14px 0;
+font-size: 18px;
+font-weight: 500;
+line-height: 1.25;
+}
+
+.project-row {
+display: flex;
+justify-content: space-between;
+gap: 15px;
+padding: 7px 0;
+border-top: 1px solid #eeeeee;
+font-size: 13px;
+}
+
+.project-row span {
+color: #777;
+}
+
+.project-row b {
+font-weight: 500;
+text-align: right;
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script>
+
+/*
+ВСТАВ СЮДИ СВІЙ ТОЙ САМИЙ PUBLIC MAPBOX TOKEN,
+ЯКИЙ ЗАРАЗ ВИКОРИСТОВУЄТЬСЯ У ТВОЄМУ IFRAME.
+*/
+
+mapboxgl.accessToken = 'pk.eyJ1IjoidGxpc292eWkiLCJhIjoiY210dzU1MzZoMDZqMTJ5cXkxMTZuaHBvdSJ9.Dt0jY7pbet5LPGLmuDTFBg';
+
+const map = new mapboxgl.Map({
+container: 'map',
+
+style: 'mapbox://styles/tlisovyi/cmtw7skow009401sggw8qhc4r',
+
+center: [30.5273, 50.4349],
+
+zoom: 10.86
+});
+
+// Забороняємо zoom колесом миші,
+// як у твоєму нинішньому iframe
+map.scrollZoom.disable();
+
+// --------------------------------------------------
+// Google Drive → URL для картинки
+// --------------------------------------------------
+
+function driveImageUrl(url) {
+
+if (!url) return '';
+
+const match = url.match(//file/d/([^/]+)/);
+
+if (match) {
+return 'https://drive.google.com/uc?export=view&id=' + match[1];
+}
+
+return url;
+}
+
+// --------------------------------------------------
+// Захист тексту
+// --------------------------------------------------
+
+function escapeHtml(value) {
+
+if (value === undefined || value === null) {
+return '';
+}
+
+return String(value).replace(/[&<>"']/g, function (char) {
+
+return {
+'&': '&',
+'<': '<',
+'>': '>',
+'"': '"',
+"'": '''
+}[char];
+
+});
+}
+
+// --------------------------------------------------
+// CLICK ПО ПРОЕКТУ
+// --------------------------------------------------
+
+map.addInteraction('project-click', {
+
+type: 'click',
+
+target: {
+layerId: 'Cottages'
+},
+
+handler: function (e) {
+
+const feature = e.feature;
+
+const properties = feature.properties || {};
+
+const coordinates =
+feature.geometry.coordinates.slice();
+
+const name =
+properties.Name || '';
+
+const area =
+properties.Area || '';
+
+const year =
+properties.Year || '';
+
+const status =
+properties.Status || '';
+
+const image =
+driveImageUrl(properties.Image || '');
+
+let imageHtml = '';
+
+if (image) {
+
+imageHtml =
+'<img src="' +
+escapeHtml(image) +
+'" alt="">';
+
+}
+
+const html = `
+
+<div class="project-popup">
+
+$`{imageHtml}
+
+<div class="project-body">
+
+<h3>
+`${escapeHtml(name)}
+</h3>
+
+<div class="project-row">
+<span>Площа</span>
+<b>$`{escapeHtml(area)}</b>
+</div>
+
+<div class="project-row">
+<span>Рік</span>
+<b>`${escapeHtml(year)}</b>
+</div>
+
+<div class="project-row">
+<span>Статус</span>
+<b>${escapeHtml(status)}</b>
+</div>
+
+</div>
+
+</div>
+
+`;
+
+new mapboxgl.Popup({
+offset: 15
+})
+
+.setLngLat(coordinates)
+
+.setHTML(html)
+
+.addTo(map);
+
+}
+
+});
+
+// --------------------------------------------------
+// Курсор при наведенні
+// --------------------------------------------------
+
+map.addInteraction('project-mouseenter', {
+
+type: 'mouseenter',
+
+target: {
+layerId: 'Cottages'
+},
+
+handler: function () {
+
+map.getCanvas().style.cursor = 'pointer';
+
+}
+
+});
+
+map.addInteraction('project-mouseleave', {
+
+type: 'mouseleave',
+
+target: {
+layerId: 'Cottages'
+},
+
+handler: function () {
+
+map.getCanvas().style.cursor = '';
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
